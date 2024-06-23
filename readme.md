@@ -7,8 +7,8 @@ Proyek ini adalah server HTTP sederhana yang melayani file statis tanpa mengguna
 1. Clone repositori ini:
 
    ```sh
-   git clone <URL_REPOSITORY>
-   cd <NAMA_FOLDER>
+   git clone https://github.com/joco-ding/static-server.git
+   cd static-server
    ```
 
 2. Compile kode Go:
@@ -57,7 +57,5 @@ Berikut adalah struktur direktori yang direkomendasikan untuk proyek ini:
 ## Lisensi
 
 Proyek ini dilisensikan di bawah [MIT License](LICENSE).
-
-```
 
 Gantilah `<URL_REPOSITORY>` dan `<NAMA_FOLDER>` dengan URL repositori Anda dan nama folder yang sesuai. Jika Anda menggunakan lisensi selain MIT, sesuaikan bagian lisensi sesuai kebutuhan.
