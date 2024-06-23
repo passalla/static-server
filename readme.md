@@ -1,6 +1,3 @@
-Berikut adalah contoh file `README.md` untuk proyek Go Anda:
-
-```markdown
 # Static File Server
 
 Proyek ini adalah server HTTP sederhana yang melayani file statis tanpa menggunakan framework Gin. Server ini dapat dikonfigurasi melalui argumen command line.
