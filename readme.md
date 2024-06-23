@@ -1,6 +1,6 @@
 # Static File Server
 
-Proyek ini adalah server HTTP sederhana yang melayani file statis tanpa menggunakan framework Gin. Server ini dapat dikonfigurasi melalui argumen command line.
+Proyek ini adalah server HTTP sederhana yang melayani file statis menggunakan framework Gin. Server ini dapat dikonfigurasi melalui argumen command line.
 
 ## Cara Menggunakan
 
@@ -34,7 +34,7 @@ Proyek ini adalah server HTTP sederhana yang melayani file statis tanpa mengguna
 Menjalankan server di port 9090, melayani file statis dari direktori `public`, dan mengaktifkan mode debug:
 
 ```sh
-./static-file-server -port 9090 -static ./public -debug true
+./static-file-server -port 9090 -static ./public -debug
 ```
 
 ## Struktur Direktori
