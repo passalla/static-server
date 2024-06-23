@@ -57,5 +57,3 @@ Berikut adalah struktur direktori yang direkomendasikan untuk proyek ini:
 ## Lisensi
 
 Proyek ini dilisensikan di bawah [MIT License](LICENSE).
-
-Gantilah `<URL_REPOSITORY>` dan `<NAMA_FOLDER>` dengan URL repositori Anda dan nama folder yang sesuai. Jika Anda menggunakan lisensi selain MIT, sesuaikan bagian lisensi sesuai kebutuhan.
