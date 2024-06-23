@@ -14,7 +14,7 @@ Proyek ini adalah server HTTP sederhana yang melayani file statis menggunakan fr
 2. Compile kode Go:
 
    ```sh
-   go build -o static-file-server main.go
+   go build -o static-file-server cmd/main.go
    ```
 
 3. Jalankan server dengan opsi yang diinginkan:
