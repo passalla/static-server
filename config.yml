@@ -1,0 +1,3 @@
+host:
+  example.com: d:/development/go/static-server/build
+  example-2.id: /home/example-2/public_html
