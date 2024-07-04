@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -60,11 +61,19 @@ func main() {
 	defaultDebug := false
 	defaultStrict := false
 
+	defaultProxy := []string{"127.0.0.1"}
+
 	// Mengambil argumen dari command line
 	port := flag.String("port", defaultPort, "Port to run the server on")
 	configFile = *flag.String("config", defaultConfigFile, "Configuration file for host to directory mapping")
 	strict := flag.Bool("strict", defaultStrict, "Return 404 if file not found without searching all folders")
 	isDebug := flag.Bool("debug", defaultDebug, "Is debug mode?")
+	proxy := flag.String("proxy", "", "string Proxies separated by commas")
+
+	proxies := defaultProxy
+	if *proxy != "" {
+		proxies = strings.Split(*proxy, ",")
+	}
 	flag.Parse()
 
 	strictMode := *strict
@@ -85,6 +94,15 @@ func main() {
 
 	// Membuat router Gin
 	r := gin.Default()
+	r.SetTrustedProxies(proxies)
+
+	r.GET("/reload", func(c *gin.Context) {
+		if err := reloadConfig(); err != nil {
+			c.String(http.StatusInternalServerError, fmt.Sprintf("Failed to reload config: %v", err))
+			return
+		}
+		c.String(http.StatusOK, "Config reloaded successfully")
+	})
 
 	r.Use(func(c *gin.Context) {
 		host := c.Request.Host
@@ -92,8 +110,6 @@ func main() {
 		configLock.RLock()
 		dir, ok := config.HostToDir[host]
 		configLock.RUnlock()
-
-		fmt.Println(c.Request.URL.Path)
 
 		if !ok {
 			fs := http.FileServer(http.Dir(defaultStaticDir))
@@ -131,14 +147,6 @@ func main() {
 		}
 		fs.ServeHTTP(c.Writer, c.Request)
 		c.Abort()
-	})
-
-	r.GET("/reload", func(c *gin.Context) {
-		if err := reloadConfig(); err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("Failed to reload config: %v", err))
-			return
-		}
-		c.String(http.StatusOK, "Config reloaded successfully")
 	})
 
 	// Menjalankan server di port yang diberikan
