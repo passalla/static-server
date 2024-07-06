@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v2"
@@ -16,6 +17,10 @@ import (
 type Config struct {
 	HostToDir map[string]string `yaml:"host"`
 }
+
+const (
+	Version = "1.0.4"
+)
 
 var (
 	config     *Config
@@ -70,11 +75,12 @@ func main() {
 	isDebug := flag.Bool("debug", defaultDebug, "Is debug mode?")
 	proxy := flag.String("proxy", "", "string Proxies separated by commas")
 
+	flag.Parse()
+
 	proxies := defaultProxy
 	if *proxy != "" {
 		proxies = strings.Split(*proxy, ",")
 	}
-	flag.Parse()
 
 	strictMode := *strict
 
@@ -93,8 +99,30 @@ func main() {
 	}
 
 	// Membuat router Gin
-	r := gin.Default()
+	r := gin.New()
 	r.SetTrustedProxies(proxies)
+	// Middleware untuk mencatat log dengan IP asli klien dan hostname
+	r.Use(gin.Recovery()) // Menambahkan middleware recovery bawaan gin
+	r.Use(func(c *gin.Context) {
+		startTime := time.Now()
+		c.Next()
+
+		// Mendapatkan alamat IP asli klien
+		clientIP := c.ClientIP()
+		// Mendapatkan hostname dari permintaan
+		host := c.Request.Host
+		// Mendapatkan durasi waktu proses
+		duration := time.Since(startTime)
+
+		// Mencatat log
+		fmt.Printf("[LOG] %d | %s | %s | %s%s | %v\n",
+			c.Writer.Status(),
+			clientIP,
+			c.Request.Method,
+			host,
+			c.Request.RequestURI,
+			duration)
+	})
 
 	r.GET("/reload", func(c *gin.Context) {
 		if err := reloadConfig(); err != nil {
@@ -150,6 +178,6 @@ func main() {
 	})
 
 	// Menjalankan server di port yang diberikan
-	fmt.Println("Listening on: ", *port)
+	fmt.Printf("Static Server Version %s Listening on: %s\n", Version, *port)
 	r.Run(fmt.Sprintf(":%s", *port))
 }
