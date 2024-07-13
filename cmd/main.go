@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -85,6 +86,21 @@ func watchConfig(filename string) {
 	}
 }
 
+func setRLimit() error {
+	var rLimit syscall.Rlimit
+	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
+		return err
+	}
+
+	rLimit.Max = 20000
+	rLimit.Cur = 20000
+
+	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
+		return err
+	}
+	return nil
+}
+
 func main() {
 	// Menentukan default values
 	defaultPort := "8080"
@@ -115,6 +131,12 @@ func main() {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
+	}
+
+	// Mengatur limit file descriptor
+	if err := setRLimit(); err != nil {
+		fmt.Printf("Error setting rlimit: %v\n", err)
+		return
 	}
 
 	// Memuat konfigurasi awal
