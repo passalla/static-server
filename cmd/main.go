@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v2"
 )
@@ -44,18 +46,43 @@ func loadConfig(filename string) (*Config, error) {
 	return &newConfig, nil
 }
 
-func reloadConfig() error {
-	newConfig, err := loadConfig(configFile)
+func watchConfig(filename string) {
+	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return err
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(filename)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	configLock.Lock()
-	config = newConfig
-	configLock.Unlock()
-
-	fmt.Printf("Config reloaded: %+v\n", config)
-	return nil
+	for {
+		select {
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return
+			}
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				log.Println("Config file modified:", event.Name)
+				newConfig, err := loadConfig(filename)
+				if err != nil {
+					log.Println("Error loading config:", err)
+					continue
+				}
+				configLock.Lock()
+				config = newConfig
+				configLock.Unlock()
+				log.Println("Config reloaded")
+			}
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return
+			}
+			log.Println("Watcher error:", err)
+		}
+	}
 }
 
 func main() {
@@ -98,6 +125,8 @@ func main() {
 		return
 	}
 
+	go watchConfig(configFile)
+
 	// Membuat router Gin
 	r := gin.New()
 	r.SetTrustedProxies(proxies)
@@ -122,14 +151,6 @@ func main() {
 			host,
 			c.Request.RequestURI,
 			duration)
-	})
-
-	r.GET("/reload", func(c *gin.Context) {
-		if err := reloadConfig(); err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("Failed to reload config: %v", err))
-			return
-		}
-		c.String(http.StatusOK, "Config reloaded successfully")
 	})
 
 	r.Use(func(c *gin.Context) {
